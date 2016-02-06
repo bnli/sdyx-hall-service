@@ -1,0 +1,17 @@
+{
+  "ssid" : "MERCURY_C35D86",
+  "parameters" : {
+    "amount" : "50.000000",
+    "customerNumber" : "07140135381",
+    "operatorID" : "JS"
+  },
+  "type" : "4",
+  "sessionId" : "",
+  "user" : "lhctest3",
+  "token" : "kGAeQuw5UdZqHTHdn2+KTg==",
+  "serialNumber" : "748cdecd811629cca146224bee1d0f04",
+  "method" : "createOrder4Recharge",
+  "location" : "100001",
+  "version" : "030101",
+  "serverAddress" : "http:\/\/192.166.62.98:8080\/PortalServer-App\/services\/PortalServer4Client"
+}

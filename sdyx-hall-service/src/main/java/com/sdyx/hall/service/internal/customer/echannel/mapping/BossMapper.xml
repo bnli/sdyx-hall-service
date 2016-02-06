@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sdyx.hall.service.internal.customer.echannel.dao.BossDao" >
+  
+  <sql id="Renewal_Column_List" >
+    po.code POCo,pp.code PPCo,mp.code MPCo
+  </sql>
+  
+  <select id="selectRenewalInfo" resultMap="RenewalInfoResultMap">
+		SELECT 
+		<include refid="Renewal_Column_List" /> 
+		from customers_${cityFlag} c 
+		join products_${cityFlag} p1 on c.id=p1.customerid
+		join PRODUCTPHYSICALRESOURCES_${cityFlag} ppr1 on ppr1.productid=p1.id
+		join PhysicalResources_${cityFlag} pr1 on pr1.id=ppr1.physicalresourceid
+		JOIN products_${cityFlag} p on c.id = p.customerid
+		JOIN operationroles ors on ors.id = c.operationroleid
+		JOIN simpletypes s on s.id = p.statusid and s.name in ('未开通', '正常', '客户暂停', '关联暂停', '到期暂停', '欠费暂停')
+		JOIN productofferings po on p.productofferingid = po.id
+		JOIN productofferingattributes poa on poa.productofferingid = po.id
+		JOIN simpletypes poas on poa.domainobjectattributeid = poas.id  and poas.name in ('宽带','数字基本','数字增值')
+		JOIN terminals_${cityFlag} tm ON tm.id=p.terminalid
+		JOIN terminalspecifications tms ON tms.id=tm.terminalspecificationid
+		LEFT JOIN marketingplans mp ON mp.id=p.marketingplanid
+		LEFT JOIN preferentialpolicies pp on pp.id = p.preferentialpolicyid
+		LEFT JOIN productphysicalresources_${cityFlag} phr on phr.productid = p.id
+		LEFT JOIN employees emp on emp.id = p.salesmanid
+		WHERE pr1.classtype='SmartCard' 
+		and pr1.code=#{caNo} 
+		and tm.name like '%${caNo}%'
+  </select>
+  
+  
+  <resultMap id="RenewalInfoResultMap" type="com.sdyx.hall.service.internal.customer.echannel.model.RenewalInfo" >
+    <result column="POCO" property="pOCo"/>
+    <result column="PPCO" property="pPCo"/>
+    <result column="MPCO" property="mPCo"/>
+  </resultMap> 
+  
+  <sql id="UserPro_Column_List" >
+	decode(tms.name,'宽带','宽带','副机','数字','主机','数字','模拟')
+	PRODUCT_OFFERING_TYPE,
+	tm.name TERMINAL_TYPE,
+	tm.id TERMINAL_IDENTIFICATION,
+	p.name PRODUCT_NAME,
+	nvl(mp.name,pp.name) PRODUCT_POLICY,
+	p.code PRODUCT_CODE,
+	s.name PRODUCT_STATUS_NAME,
+	p.startlifecycle PRODUCT_DINGGOU_VALID,
+	p.startvalidfor PRODUCT_START_VALID,
+	p.endvalidfor PRODUCT_END_VALID,
+	case when s.name IN ('客户暂停', '关联暂停', '到期暂停', '欠费暂停') then
+	p.statuschangedate end PRODUCT_PAUSE_TIME,
+	case when instr(emp.name,'银行')= 0 then ( select eo.organizationunit_name
+	from employee_organizationunit eo where eo.employee_code = emp.code )
+	else emp.name end SERVICE_CHANNEL
+  </sql>
+  
+  <select id="selectUserProInfo" resultMap="UserProInfoResultMap">
+		SELECT
+		<include refid="UserPro_Column_List" /> 
+		from customers_${cityFlag} c 
+		join products_${cityFlag} p1 on c.id=p1.customerid
+		join PRODUCTPHYSICALRESOURCES_${cityFlag} ppr1 on ppr1.productid=p1.id
+		join PhysicalResources_${cityFlag} pr1 on pr1.id=ppr1.physicalresourceid
+		JOIN products_${cityFlag} p on c.id = p.customerid
+		JOIN operationroles ors on ors.id = c.operationroleid
+		JOIN simpletypes s on s.id = p.statusid and s.name in ('未开通', '正常', '客户暂停', '关联暂停', '到期暂停', '欠费暂停')
+		JOIN productofferings po on p.productofferingid = po.id
+		JOIN productofferingattributes poa on poa.productofferingid = po.id
+		JOIN simpletypes poas on poa.domainobjectattributeid = poas.id  and poas.name in ('宽带','数字基本','数字增值')
+		JOIN terminals_${cityFlag} tm ON tm.id=p.terminalid
+		JOIN terminalspecifications tms ON tms.id=tm.terminalspecificationid
+		LEFT JOIN marketingplans mp ON mp.id=p.marketingplanid
+		LEFT JOIN preferentialpolicies pp on pp.id = p.preferentialpolicyid
+		LEFT JOIN productphysicalresources_${cityFlag} phr on phr.productid = p.id
+		LEFT JOIN employees emp on emp.id = p.salesmanid
+		WHERE pr1.classtype='SmartCard' 
+		and pr1.code=#{caNo} 
+		and tm.name like '%${caNo}%'
+  </select>
+  
+  <resultMap id="UserProInfoResultMap" type="com.sdyx.hall.service.internal.customer.echannel.model.UserProInfo" >
+    <result column="PRODUCT_OFFERING_TYPE" property="productOfferingType"/>
+    <result column="TERMINAL_TYPE" property="terminalType"/>
+    <result column="TERMINAL_IDENTIFICATION" property="terminalIdentification"/>
+    <result column="PRODUCT_NAME" property="productName"/>
+    <result column="PRODUCT_POLICY" property="productPolicy"/>
+    <result column="PRODUCT_CODE" property="productCode"/>
+    <result column="PRODUCT_STATUS_NAME" property="productStatusName"/>
+    <result column="PRODUCT_DINGGOU_VALID" property="productDinggouValid"/>
+    <result column="PRODUCT_START_VALID" property="productStartValid"/>
+    <result column="PRODUCT_END_VALID" property="productEndValid"/>
+    <result column="PRODUCT_PAUSE_TIME" property="productPauseTime"/>
+    <result column="SERVICE_CHANNEL" property="serviceChannel"/>
+  </resultMap> 
+  
+  <select id="selectCustomerBalanceInfo" resultType="java.lang.Double">
+		select 
+   			sum(b.availableamount)
+		from customers_${cityFlag} c
+  			join customeraccounts_${cityFlag} ca on ca.customerid = c.id
+  			join customerbillingcredits_${cityFlag} cbc on cbc.customeraccountid = ca.id
+  			join customeraccountbalances_${cityFlag} b on b.customerbillingcreditid = cbc.id
+		where
+  			c.code = #{cNo} and b.classtype = 'CustomerCommonBalance' and b.balancetypeid = '9223372036824257603'
+  </select>
+  
+  <resultMap id="OrderInfoResultMap" type="com.sdyx.hall.service.internal.customer.echannel.model.OrderItemInfo" >
+    <result column="ORDER_TYPE" property="orderType"/>
+  	<result column="CUSTOMER_CODE" property="customerCode"/>
+  	<result column="CUSTOMER_NAME" property="customerName"/>
+  	<result column="MANAGEADDRESS_FULLNAME" property="manageAddressFullName"/>
+  	<result column="COMMODITY_NAME" property="commodityName"/>
+  	<result column="PAY_MONTH" property="payMonth"/>
+  	<result column="COMMODITY_PRICE" property="commodityPrice"/>
+  	<result column="CA_NUMBER" property="caNumber"/>
+  </resultMap> 
+  
+  <select id="selectOrderInfo" resultMap="OrderInfoResultMap">
+	select
+		1 ORDER_TYPE, c.code CUSTOMER_CODE, c.name CUSTOMER_NAME, ma.fullname MANAGEADDRESS_FULLNAME, coip.name COMMODITY_NAME, months_between(coi.endusingfeeperiod, coi.startusingfeeperiod) PAY_MONTH, coi.amount COMMODITY_PRICE, pr.code CA_NUMBER
+	from payments_${cityFlag} t
+		join customerorders_${cityFlag} co on co.id = t.customerorderid
+		join customerorderitems_${cityFlag} coi on coi.customerorderid = co.id
+		join products_${cityFlag} coip on coip.id = coi.productid
+		join customers_${cityFlag} c on c.id = co.customerid
+		join products_${cityFlag} p on c.id=p.customerid
+		join PRODUCTPHYSICALRESOURCES_${cityFlag} ppr on ppr.productid=p.id
+		join PhysicalResources_${cityFlag} pr on pr.id=ppr.physicalresourceid
+		join manageaddresses_${cityFlag} ma on ma.id = c.defaultinstalladdressid
+	where
+		pr.classtype = 'SmartCard' and t.externaltradesn = #{odNo}
+	union
+	select
+		2, c.code, c.name, ma.fullname, null, null, t.amount, null
+	from payments_${cityFlag} t
+		join customerorders_${cityFlag} co on co.id = t.customerorderid
+		join customers_${cityFlag} c on c.id = co.customerid
+		join manageaddresses_${cityFlag} ma on ma.id = c.defaultinstalladdressid
+	where
+		co.classtype = 'PayDepositeOrder' and t.externaltradesn = #{odNo}
+  </select>
+  
+</mapper>

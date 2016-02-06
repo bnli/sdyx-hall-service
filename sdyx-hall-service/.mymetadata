@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-module
+  type="WEB"
+  name="sdyx-hall-service"
+  id="myeclipse.1448935629472"
+  context-root="/sdyx-hall-service"
+  j2ee-spec="6.0"
+  archive="sdyx-hall-service.war">
+  <attributes>
+    <attribute name="webrootdir" value="src/main/webapp" />
+  </attributes>
+</project-module>
+
